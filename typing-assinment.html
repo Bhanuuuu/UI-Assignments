@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Typing Skill Assessment</title>
+<style>
+    body {
+        background: #F0F8FF;
+        color: #111;
+        font-family: Consolas, monospace;
+        padding: 20px;
+    }
+
+    h2 {
+        border-bottom: 1px dashed #2997ff;
+        padding-bottom: 10px;
+    }
+
+    .container {
+        margin-top: 20px;
+    }
+
+    textarea {
+        width: 100%;
+        height: 200px;
+        background: #F5F5DC;
+        color: #111;
+        border: 2px dashed #666;
+        padding: 10px;
+        font-size: 16px;
+        resize: none;
+    }
+
+    .summary {
+        margin-top: 20px;
+        background: #2997fh;
+        border: 1px dashed #444;
+        padding: 15px;
+        width: 420px;
+    }
+
+    button {
+        margin-top: 20px;
+        padding: 10px 20px;
+        background: #2997ff;
+        border: none;
+        color: #000;
+        cursor: pointer;
+        font-weight: bold;
+    }
+</style>
+</head>
+<body>
+
+<h2>Typing Skill Assessment</h2>
+
+<div>
+    <strong>Clock:</strong> <span id="clock">--:--:--</span><br>
+    <strong>Timer:</strong> <span id="timer">00:00:00</span>
+</div>
+
+<div class="container">
+    <textarea id="typingBox" placeholder="Start typing here..."></textarea>
+</div>
+
+<div class="summary">
+    <h3>Summary</h3>
+    Words Typed Per Second: <span id="wps">0</span><br>
+    Chars Typed Per Second: <span id="cps">0</span><br>
+    Sentences Per Minute: <span id="spm">0</span>
+</div>
+
+<button id="resetBtn">RESET</button>
+
+<script>
+/* ------- Live Clock ------ */
+
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/* ------------- Live Clock using async loop ---------- */
+async function startClock() {
+    while (true) {
+        document.getElementById("clock").textContent =
+            new Date().toLocaleTimeString();
+        await delay(1000);
+    }
+}
+startClock();   // start live clock immediately
+
+/* ------------- Typing Timer Variables ------------- */
+let hours = 0, minutes = 0, seconds = 0;
+let timerRunning = false;
+let stopTimer = false;
+
+/* ----------- Async Timer Function ------------------ */
+async function startTimer() {
+    timerRunning = true;
+    stopTimer = false;
+
+    while (!stopTimer) {
+        await delay(1000);
+        seconds++;
+
+        if (seconds === 60) { seconds = 0; minutes++; }
+        if (minutes === 60) { minutes = 0; hours++; }
+
+        document.getElementById("timer").textContent =
+            `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+
+        await updateStats();
+    }
+}
+
+function pad(num) {
+    return num.toString().padStart(2, "0");
+}
+
+/* ------------ Calculate Stats (Async) -------------- */
+async function updateStats() {
+    let text = document.getElementById("typingBox").value.trim();
+
+    let words = text.split(/\s+/).filter(w => w.length > 0).length;
+    let chars = text.length;
+    let sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0).length;
+
+    let totalSeconds = hours * 3600 + minutes * 60 + seconds;
+    if (totalSeconds === 0) return;
+
+    document.getElementById("wps").textContent = (words / totalSeconds).toFixed(2);
+    document.getElementById("cps").textContent = (chars / totalSeconds).toFixed(2);
+    document.getElementById("spm").textContent = ((sentences / totalSeconds) * 60).toFixed(2);
+}
+
+/* ------------ Start timer when textbox is focused ------------ */
+document.getElementById("typingBox").addEventListener("focus", () => {
+    if (!timerRunning) {
+        startTimer();
+    }
+});
+
+/* ------------ Pause timer on blur ------------ */
+document.getElementById("typingBox").addEventListener("blur", () => {
+    stopTimer = true;
+    timerRunning = false;
+});
+
+/* ------------ RESET Button ------------------- */
+document.getElementById("resetBtn").addEventListener("click", () => {
+    stopTimer = true;
+    timerRunning = false;
+
+    hours = minutes = seconds = 0;
+
+    document.getElementById("typingBox").value = "";
+    document.getElementById("timer").textContent = "00:00:00";
+
+    document.getElementById("wps").textContent = 0;
+    document.getElementById("cps").textContent = 0;
+    document.getElementById("spm").textContent = 0;
+});
+
+</script>
+
+</body>
+</html>
