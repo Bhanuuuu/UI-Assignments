@@ -1,0 +1,110 @@
+import { useDispatch, useSelector } from 'react-redux';
+import { useState } from 'react';
+import { addTransaction, removeTransaction }
+  from '../features/transactions/transactionsSlice';
+import { selectTransactions, selectTotals }
+  from '../features/transactions/transactionsSelectors';
+import type { AppDispatch } from '../app/store';
+
+export default function Statement() {
+  const dispatch = useDispatch<AppDispatch>();
+  const transactions = useSelector(selectTransactions);
+  const { credit, debit, balance } = useSelector(selectTotals);
+
+  const [form, setForm] = useState({
+    date: '',
+    header: '',
+    credit: '' as string | number,
+    debit: '' as string | number,
+  });
+
+  const handleAdd = () => {
+    dispatch(addTransaction({
+      date: form.date,
+      header: form.header,
+      credit: Number(form.credit) || undefined,
+      debit: Number(form.debit) || undefined,
+    }));
+
+    setForm({ date: '', header: '', credit: '', debit: '' });
+  };
+
+  return (
+    <table border={1} width="100%">
+      <thead>
+        <tr>
+          <th>TxnId</th>
+          <th>TxnDate</th>
+          <th>Header</th>
+          <th>Credit</th>
+          <th>Debit</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {/* INPUT ROW */}
+        <tr>
+          <td />
+          <td>
+            <input
+              value={form.date}
+              onChange={e => setForm({ ...form, date: e.target.value })}
+            />
+          </td>
+          <td>
+            <input
+              value={form.header}
+              onChange={e => setForm({ ...form, header: e.target.value })}
+            />
+          </td>
+          <td>
+            <input
+              value={form.credit}
+              onChange={e => setForm({ ...form, credit: e.target.value })}
+            />
+          </td>
+          <td>
+            <input
+              value={form.debit}
+              onChange={e => setForm({ ...form, debit: e.target.value })}
+            />
+          </td>
+          <td>
+            <button onClick={handleAdd}>ADD</button>
+          </td>
+        </tr>
+
+        {/* DATA ROWS */}
+        {transactions.map((t, index) => (
+          <tr key={t.id}>
+            <td>{index + 1}</td>
+            <td>{t.date}</td>
+            <td>{t.header}</td>
+            <td>{t.credit || ''}</td>
+            <td>{t.debit || ''}</td>
+            <td>
+              <button onClick={() => dispatch(removeTransaction(t.id))}>
+                REMOVE
+              </button>
+            </td>
+          </tr>
+        ))}
+
+        {/* TOTALS */}
+        <tr>
+          <td colSpan={3}><b>Totals</b></td>
+          <td><b>{credit}</b></td>
+          <td><b>{debit}</b></td>
+          <td />
+        </tr>
+
+        {/* BALANCE */}
+        <tr>
+          <td colSpan={4}><b>Balance</b></td>
+          <td colSpan={2}><b>{balance}</b></td>
+        </tr>
+      </tbody>
+    </table>
+  );
+}
